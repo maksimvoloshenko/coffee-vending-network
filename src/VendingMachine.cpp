@@ -39,3 +39,13 @@ bool VendingMachine::MakeDrink(const Recipe& recipe)
     std::cout << "Drink '" << recipe.GetName() << "' is ready!\n";
     return true;
 }
+
+int VendingMachine::GetCoffeeAmount() const
+{
+    return m_coffee.GetAmount();
+}
+
+int VendingMachine::GetMilkAmount() const
+{
+    return m_milk.GetAmount();
+}

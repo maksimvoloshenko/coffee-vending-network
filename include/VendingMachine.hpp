@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "Ingredient.hpp"
@@ -16,9 +15,12 @@ public:
     bool AddMilk(int amount);
     bool MakeDrink(const Recipe& recipe);
 
+    // Новые методы для наблюдателя (NetworkOperator)
+    int GetCoffeeAmount() const;
+    int GetMilkAmount() const;
+
 private:
     std::string m_id;
     Ingredient m_coffee;
     Ingredient m_milk;
 };
-
