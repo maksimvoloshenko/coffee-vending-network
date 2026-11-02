@@ -1,9 +1,17 @@
 # Курсовой проект: управление сетью кофейных автоматов
 
-C++-часть лабораторной работы №3 (умные указатели).
+## Часть 1. Сборка и запуск на C++
 
-## Сборка и запуск
+Для сборки проекта на C++ выполните команду из корня проекта:
+g++ -std=c++17 -Iinclude src/Ingredient.cpp src/Recipe.cpp src/VendingMachine.cpp src/NetworkOperator.cpp src/BaseMachine.cpp src/CoffeeMachine.cpp src/SnackMachine.cpp main.cpp -o app
 
-```bash
-g++ -std=c++17 -Iinclude src/Ingredient.cpp src/Recipe.cpp src/VendingMachine.cpp src/NetworkOperator.cpp main.cpp -o app
+Запуск:
 ./app
+
+## Часть 2. Сборка и запуск на C#
+
+Для сборки и запуска C# части перейдите в папку проекта:
+cd csharp-part
+
+Запуск программы:
+dotnet run
