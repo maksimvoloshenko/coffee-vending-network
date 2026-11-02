@@ -1,83 +1,55 @@
 #include <iostream>
-#include <memory>
 #include <vector>
-#include "VendingMachine.hpp"
-#include "Recipe.hpp"
-#include "NetworkOperator.hpp"
+#include <memory>
+#include <string>
+#include "CoffeeMachine.hpp"
+#include "SnackMachine.hpp"
 
-int main()
-{
-    // ============================================================
-    // Блок 1. unique_ptr — один владелец
-    // ============================================================
-    std::cout << "=== unique_ptr: single owner ===\n";
+int main() {
+    std::cout << "=== 1. Polymorphism and Virtual Destructor ===\n";
     {
-        std::unique_ptr<VendingMachine> machine =
-            std::make_unique<VendingMachine>("VM-01", 100, 100);
+        auto recipe1 = std::make_shared<Recipe>("Cappuccino", 10, 20);
+        
+        // Массив указателей на базовый класс
+        std::vector<std::unique_ptr<BaseMachine>> machines;
+        machines.push_back(std::make_unique<CoffeeMachine>("CM-01", "Hall", "Arabica", recipe1));
+        machines.push_back(std::make_unique<SnackMachine>("SM-01", "Lobby", 10));
 
-        machine->AddCoffee(50);
-        machine->AddMilk(50);
-
-        std::unique_ptr<Recipe> cappuccino =
-            std::make_unique<Recipe>("Cappuccino", 10, 20);
-
-        machine->MakeDrink(*cappuccino);
-
-        machine->AddCoffee(100);
-
-        std::unique_ptr<VendingMachine> movedMachine = std::move(machine);
-        std::cout << "After std::move machine is empty: "
-                  << (machine == nullptr ? "true" : "false") << "\n";
-    }
-
-    // ============================================================
-    // Блок 2. shared_ptr и weak_ptr
-    // ============================================================
-    std::cout << "\n=== shared_ptr and weak_ptr ===\n";
-    {
-        std::shared_ptr<VendingMachine> machine =
-            std::make_shared<VendingMachine>("VM-02", 100, 100);
-
-        machine->AddCoffee(50);
-        machine->AddMilk(40);
-
-        NetworkOperator op("Operator-1");
-        op.Watch(machine);
-
-        std::cout << "use_count after creation: " << machine.use_count() << "\n";
-
-        {
-            std::shared_ptr<VendingMachine> copy = machine;
-            std::cout << "use_count after copy: " << machine.use_count() << "\n";
+        for (const auto& m : machines) {
+            std::cout << m->Describe() << "\n";
         }
-        std::cout << "use_count after copy is destroyed: " << machine.use_count() << "\n";
+    } // Виртуальные деструкторы вызовутся автоматически
 
-        op.Report();
+    std::cout << "\n=== 2. Deep Copy and Assignment (this) ===\n";
+    auto recipe2 = std::make_shared<Recipe>("Latte", 5, 15);
+    CoffeeMachine original("CM-02", "Office", "Latte", recipe2);
+    
+    // Вызов конструктора копирования (Глубокая копия)
+    CoffeeMachine deepCopy = original;
+    
+    std::cout << "Original: " << original.Describe() << "\n";
+    std::cout << "DeepCopy: " << deepCopy.Describe() << "\n";
+    
+    // Присваивание (вызовет наш оператор с this)
+    CoffeeMachine another("CM-03", "Floor", "Espresso", recipe2);
+    another = original;
+    std::cout << "Another after assignment: " << another.Describe() << "\n";
 
-        machine.reset();
-        std::cout << "use_count after last owner released: " << machine.use_count() << "\n";
+    std::cout << "\n=== 3. Clone ===\n";
+    std::unique_ptr<BaseMachine> cloned = original.Clone();
+    std::cout << "Cloned: " << cloned->Describe() << "\n";
 
-        op.Report();
-    }
+    std::cout << "\n=== 4. Static Members ===\n";
+    std::cout << "Total machines created: " << BaseMachine::GetTotalMachines() << "\n";
 
-    // ============================================================
-    // Блок 3. Массив динамических объектов
-    // ============================================================
-    std::cout << "\n=== Array of dynamic objects ===\n";    {
-        std::vector<std::unique_ptr<VendingMachine>> machines;
+    std::cout << "\n=== 5. String operations ===\n";
+    std::string text = "Coffee Vending Network";
+    std::cout << "Original: " << text << "\n";
+    std::cout << "Length: " << text.length() << "\n";
+    std::cout << "Find 'Vending': " << text.find("Vending") << "\n";
+    std::cout << "Substr (0, 6): " << text.substr(0, 6) << "\n";
+    if (text == "Coffee Vending Network") std::cout << "Strings are equal\n";
 
-        machines.push_back(std::make_unique<VendingMachine>("VM-03", 50, 50));
-        machines.push_back(std::make_unique<VendingMachine>("VM-04", 60, 60));
-
-        for (auto& m : machines)
-        {
-            m->AddCoffee(30);
-            m->AddMilk(30);
-        }
-
-        std::cout << "Machines in network: " << machines.size() << "\n";
-    }
-
-    std::cout << "\n=== Program finished ===\n";
+    std::cout << "\n=== End of program ===\n";
     return 0;
 }
