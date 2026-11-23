@@ -1,83 +1,58 @@
+#include <windows.h>
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "VendingMachine.hpp"
-#include "Recipe.hpp"
-#include "NetworkOperator.hpp"
+#include "BaseMachine.hpp"
+#include "CoffeeMachine.hpp"
+#include "SnackMachine.hpp"
+#include "TeaMachine.hpp"
+#include "DiscountPolicy.hpp"
+#include "IPreparable.hpp"
 
-int main()
-{
-    // ============================================================
-    // Блок 1. unique_ptr — один владелец
-    // ============================================================
-    std::cout << "=== unique_ptr: single owner ===\n";
-    {
-        std::unique_ptr<VendingMachine> machine =
-            std::make_unique<VendingMachine>("VM-01", 100, 100);
+void ServeDrink(IPreparable& item, std::string_view drink) {
+    try {
+        item.PrepareDrink(drink);
+    } catch (const NoIngredientsException& e) {
+        std::cout << "[Исключение] " << e.what() << " — Пополните автомат!\n";
+    }
+}
 
-        machine->AddCoffee(50);
-        machine->AddMilk(50);
+void CheckMachine(BaseMachine& machine) {
+    std::cout << "\nПроверка автомата " << machine.GetId() << ":\n";
+    if (auto* preparable = dynamic_cast<IPreparable*>(&machine)) {
+        std::cout << " -> Умеет готовить!\n";
+        ServeDrink(*preparable, "Cappuccino");
+        ServeDrink(*preparable, "Latte"); 
+    } else {
+        std::cout << " -> Не умеет готовить напитки (только снеки).\n";
+    }
+}
 
-        std::unique_ptr<Recipe> cappuccino =
-            std::make_unique<Recipe>("Cappuccino", 10, 20);
+int main() {
+SetConsoleOutputCP(CP_UTF8);
+    std::cout << "=== 1. Раннее и позднее связывание ===\n";
+    std::vector<std::unique_ptr<BaseMachine>> network;
+    
+    network.push_back(std::make_unique<CoffeeMachine>("CM-01", "Холл", "Arabica", std::make_shared<Recipe>("Espresso", 10, 0)));
+    network.push_back(std::make_unique<TeaMachine>("TM-01", "2 этаж"));
+    network.push_back(std::make_unique<SnackMachine>("SM-01", "1 этаж", 20));
 
-        machine->MakeDrink(*cappuccino);
-
-        machine->AddCoffee(100);
-
-        std::unique_ptr<VendingMachine> movedMachine = std::move(machine);
-        std::cout << "After std::move machine is empty: "
-                  << (machine == nullptr ? "true" : "false") << "\n";
+    for (const auto& machine : network) {
+        std::cout << "Категория: " << machine->GetCategory() << "\n";
+        std::cout << "Описание: " << machine->Describe() << "\n";
     }
 
-    // ============================================================
-    // Блок 2. shared_ptr и weak_ptr
-    // ============================================================
-    std::cout << "\n=== shared_ptr and weak_ptr ===\n";
-    {
-        std::shared_ptr<VendingMachine> machine =
-            std::make_shared<VendingMachine>("VM-02", 100, 100);
-
-        machine->AddCoffee(50);
-        machine->AddMilk(40);
-
-        NetworkOperator op("Operator-1");
-        op.Watch(machine);
-
-        std::cout << "use_count after creation: " << machine.use_count() << "\n";
-
-        {
-            std::shared_ptr<VendingMachine> copy = machine;
-            std::cout << "use_count after copy: " << machine.use_count() << "\n";
-        }
-        std::cout << "use_count after copy is destroyed: " << machine.use_count() << "\n";
-
-        op.Report();
-
-        machine.reset();
-        std::cout << "use_count after last owner released: " << machine.use_count() << "\n";
-
-        op.Report();
+    std::cout << "\n=== 2. dynamic_cast и Исключения ===\n";
+    for (const auto& machine : network) {
+        CheckMachine(*machine);
     }
 
-    // ============================================================
-    // Блок 3. Массив динамических объектов
-    // ============================================================
-    std::cout << "\n=== Array of dynamic objects ===\n";    {
-        std::vector<std::unique_ptr<VendingMachine>> machines;
+    std::cout << "\n=== 3. Конфигурирование поведения (Скидки) ===\n";
+    Order myOrder(200, std::make_unique<NoDiscount>());
+    std::cout << "Обычная цена: " << myOrder.GetFinalPrice() << " руб.\n";
 
-        machines.push_back(std::make_unique<VendingMachine>("VM-03", 50, 50));
-        machines.push_back(std::make_unique<VendingMachine>("VM-04", 60, 60));
+    myOrder.SetPolicy(std::make_unique<StudentDiscount>());
+    std::cout << "Студенческая цена: " << myOrder.GetFinalPrice() << " руб.\n";
 
-        for (auto& m : machines)
-        {
-            m->AddCoffee(30);
-            m->AddMilk(30);
-        }
-
-        std::cout << "Machines in network: " << machines.size() << "\n";
-    }
-
-    std::cout << "\n=== Program finished ===\n";
     return 0;
 }
