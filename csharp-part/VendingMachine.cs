@@ -2,76 +2,52 @@ using System;
 
 namespace CoffeeVendingNetwork
 {
-    /// <summary>
-    /// Кофейный автомат. Хранит ингредиенты (композиция)
-    /// и умеет готовить напитки по рецептам (агрегация).
-    /// </summary>
     public class VendingMachine
     {
-        // Поля
         private string _id;
-        private Ingredient _coffee;   // композиция: часть автомата
-        private Ingredient _milk;     // композиция: часть автомата
+        private Ingredient _coffee;
+        private Ingredient _milk;
 
-        // Свойство для чтения идентификатора
-        public string Id
-        {
-            get { return _id; }
-        }
+        public string Id => _id;
+        public Ingredient Coffee => _coffee;
+        public Ingredient Milk => _milk;
 
-        // Свойство для чтения имени ингредиента кофе
-        public Ingredient Coffee
-        {
-            get { return _coffee; }
-        }
-
-        // Свойство для чтения имени ингредиента молоко
-        public Ingredient Milk
-        {
-            get { return _milk; }
-        }
-
-        // Конструктор: создаёт автомат с двумя ингредиентами ВНУТРИ (композиция)
         public VendingMachine(string id, int maxCoffee, int maxMilk)
         {
             _id = id;
-            _coffee = new Ingredient("coffee", maxCoffee);  // создаём ВНУТРИ
-            _milk = new Ingredient("milk", maxMilk);        // создаём ВНУТРИ
+            _coffee = new Ingredient("coffee", maxCoffee);
+            _milk = new Ingredient("milk", maxMilk);
             Console.WriteLine($"VendingMachine '{_id}' created");
         }
 
-        // Содержательный метод: пополнить кофе
-        public bool AddCoffee(int amount)
+        // Изменено на void, так как Ingredient.Add теперь бросает исключение, а не возвращает bool
+        public void AddCoffee(int amount)
         {
-            return _coffee.Add(amount);
+            _coffee.Add(amount);
         }
 
-        // Содержательный метод: пополнить молоко
-        public bool AddMilk(int amount)
+        public void AddMilk(int amount)
         {
-            return _milk.Add(amount);
+            _milk.Add(amount);
         }
 
-        // Содержательный метод: приготовить напиток по рецепту (агрегация)
-        // Рецепт передаётся СНАРУЖИ — автомат им не владеет.
         public bool MakeDrink(Recipe recipe)
         {
             // Проверка правила: хватает ли ингредиентов?
+            // В ЛР5 мы переводим проверки на исключения
             if (_coffee.Amount < recipe.RequiredCoffee ||
                 _milk.Amount < recipe.RequiredMilk)
             {
-                Console.WriteLine($"Cannot make {recipe.Name}: not enough ingredients");
-                return false;
+                throw new InvalidOperationException($"Cannot make {recipe.Name}: not enough ingredients");
             }
 
-            // Списываем ингредиенты
+            // Списываем ингредиенты (они тоже теперь могут бросить исключение)
             _coffee.Consume(recipe.RequiredCoffee);
             _milk.Consume(recipe.RequiredMilk);
             Console.WriteLine($"Drink '{recipe.Name}' is ready!");
             return true;
         }
 
-        // ToString() — текстовое представление
         public override string ToString()
         {
             return $"VendingMachine '{_id}' [coffee: {_coffee.Amount}/{_coffee.MaxAmount}, milk: {_milk.Amount}/{_milk.MaxAmount}]";
